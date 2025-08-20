@@ -102,6 +102,8 @@ public abstract class EntityDocumentImpl implements EntityDocument {
 	@JsonIgnore
 	protected final long revisionId;
 
+	protected String modified;
+
 	/**
 	 * Constructor.
 	 *
@@ -171,4 +173,10 @@ public abstract class EntityDocumentImpl implements EntityDocument {
 		return this.revisionId;
 
 	}
+
+	@Override
+	public String getModified() {
+		return modified;
+	}
+
 }

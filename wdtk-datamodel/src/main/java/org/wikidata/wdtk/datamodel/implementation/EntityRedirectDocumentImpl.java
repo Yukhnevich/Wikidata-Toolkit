@@ -42,6 +42,7 @@ public class EntityRedirectDocumentImpl implements EntityRedirectDocument  {
 	private final EntityIdValue entityId;
 	private final EntityIdValue targetId;
 	private final long revisionId;
+	private String modified;
 
 	/**
 	 * Constructor.
@@ -98,6 +99,11 @@ public class EntityRedirectDocumentImpl implements EntityRedirectDocument  {
 	@Override
 	public EntityRedirectDocument withRevisionId(long newRevisionId) {
 		return new EntityRedirectDocumentImpl(entityId, targetId, newRevisionId);
+	}
+
+	@Override
+	public String getModified() {
+		return modified;
 	}
 
 	@JsonIgnore
