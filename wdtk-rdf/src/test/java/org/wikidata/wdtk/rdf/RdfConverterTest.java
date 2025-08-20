@@ -1,5 +1,3 @@
-package org.wikidata.wdtk.rdf;
-
 /*
  * #%L
  * Wikidata Toolkit RDF
@@ -20,7 +18,10 @@ package org.wikidata.wdtk.rdf;
  * #L%
  */
 
+package org.wikidata.wdtk.rdf;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,16 +30,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.wikidata.wdtk.datamodel.helpers.Datamodel;
 import org.wikidata.wdtk.datamodel.helpers.StatementBuilder;
 import org.wikidata.wdtk.datamodel.implementation.DataObjectFactoryImpl;
@@ -48,7 +50,6 @@ import org.wikidata.wdtk.datamodel.interfaces.DatatypeIdValue;
 import org.wikidata.wdtk.datamodel.interfaces.GlobeCoordinatesValue;
 import org.wikidata.wdtk.datamodel.interfaces.ItemDocument;
 import org.wikidata.wdtk.datamodel.interfaces.ItemIdValue;
-import org.wikidata.wdtk.datamodel.interfaces.MonolingualTextValue;
 import org.wikidata.wdtk.datamodel.interfaces.PropertyDocument;
 import org.wikidata.wdtk.datamodel.interfaces.PropertyIdValue;
 import org.wikidata.wdtk.datamodel.interfaces.SiteLink;
@@ -89,8 +90,10 @@ public class RdfConverterTest {
 		this.rdfConverter.writeItemDocument(document);
 		this.rdfWriter.finish();
 		Model model = RdfTestHelpers.parseRdf(out.toString());
-		assertEquals(model, RdfTestHelpers.parseRdf(RdfTestHelpers
-				.getResourceFromFile("ItemDocument.rdf")));
+		assertTrue(Models.isomorphic(
+				model,
+				RdfTestHelpers.parseRdf(RdfTestHelpers.getResourceFromFile("ItemDocument.rdf"))
+		));
 	}
 
 	@Test
@@ -103,8 +106,10 @@ public class RdfConverterTest {
 		this.rdfConverter.writeItemDocument(document);
 		this.rdfWriter.finish();
 		Model model = RdfTestHelpers.parseRdf(out.toString());
-		assertEquals(model, RdfTestHelpers.parseRdf(RdfTestHelpers
-				.getResourceFromFile("ItemDocumentUnknownPropertyTypes.rdf")));
+		assertTrue(Models.isomorphic(
+				model,
+				RdfTestHelpers.parseRdf(RdfTestHelpers.getResourceFromFile("ItemDocumentUnknownPropertyTypes.rdf"))
+		));
 	}
 
 
@@ -267,64 +272,6 @@ public class RdfConverterTest {
 				Collections.emptyList(),
 				Collections.emptyList(),
 				statementGroups, Collections.emptyMap(), 0);
-	}
-
-	private PropertyDocument createTestPropertyDocument() {
-		PropertyIdValue propertyIdValue = this.dataObjectFactory
-				.getPropertyIdValue("P171", "http://www.wikidata.org/");
-		PropertyIdValue subpropertyOf = this.dataObjectFactory
-				.getPropertyIdValue("P1647", "http://www.wikidata.org/");
-		PropertyIdValue subclassOf = this.dataObjectFactory.getPropertyIdValue(
-				"P279", "http://www.wikidata.org/");
-
-		List<MonolingualTextValue> labels = new ArrayList<>();
-		List<MonolingualTextValue> descriptions = new ArrayList<>();
-		List<MonolingualTextValue> aliases = new ArrayList<>();
-
-		List<Statement> statements = new ArrayList<>();
-		statements.add(this.dataObjectFactory.getStatement(propertyIdValue,
-				this.dataObjectFactory.getValueSnak(subpropertyOf, subclassOf),
-				Collections.emptyList(), Collections.emptyList(),
-				StatementRank.NORMAL, "P171$6fb788c6-4e81-8398-3a1a-68f8b98a8943"));
-		StatementGroup statementGroup = this.dataObjectFactory
-				.getStatementGroup(statements);
-		List<StatementGroup> statementGroups = new ArrayList<>();
-		statementGroups.add(statementGroup);
-
-		DatatypeIdValue datatypeId = this.dataObjectFactory
-				.getDatatypeIdValue(DatatypeIdValue.DT_ITEM);
-
-		return this.dataObjectFactory.getPropertyDocument(propertyIdValue,
-				labels, descriptions, aliases, statementGroups, datatypeId, 0);
-	}
-
-	private PropertyDocument createWrongTestPropertyDocument() {
-		PropertyIdValue propertyIdValue = this.dataObjectFactory
-				.getPropertyIdValue("P171", "http://www.wikidata.org/");
-		PropertyIdValue subpropertyOf = this.dataObjectFactory
-				.getPropertyIdValue("P1647", "http://www.wikidata.org/");
-		PropertyIdValue wrongProperty = this.dataObjectFactory
-				.getPropertyIdValue("P90000", "http://www.wikidata.org/");
-
-		List<MonolingualTextValue> labels = new ArrayList<>();
-		List<MonolingualTextValue> descriptions = new ArrayList<>();
-		List<MonolingualTextValue> aliases = new ArrayList<>();
-
-		List<Statement> statements = new ArrayList<>();
-		statements.add(this.dataObjectFactory.getStatement(propertyIdValue,
-				this.dataObjectFactory.getValueSnak(subpropertyOf, wrongProperty),
-				Collections.emptyList(), Collections.emptyList(),
-				StatementRank.NORMAL, "P171$6fb788c6-4e81-8398-3a1a-68f8b98a8943"));
-		StatementGroup statementGroup = this.dataObjectFactory
-				.getStatementGroup(statements);
-		List<StatementGroup> statementGroups = new ArrayList<>();
-		statementGroups.add(statementGroup);
-
-		DatatypeIdValue datatypeId = this.dataObjectFactory
-				.getDatatypeIdValue(DatatypeIdValue.DT_ITEM);
-
-		return this.dataObjectFactory.getPropertyDocument(propertyIdValue,
-				labels, descriptions, aliases, statementGroups, datatypeId, 0);
 	}
 
 	@Test

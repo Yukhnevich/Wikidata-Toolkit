@@ -76,8 +76,15 @@ public class DataObjectFactoryImplTest {
 
 	@Test
 	public final void testGetDatatypeId() {
-		DatatypeIdValue o1 = new DatatypeIdImpl(DatatypeIdValue.DT_TIME);
-		DatatypeIdValue o2 = factory.getDatatypeIdValue(DatatypeIdValue.DT_TIME);
+		DatatypeIdValue o1 = new DatatypeIdImpl(null, DatatypeIdValue.JSON_DT_TIME);
+		DatatypeIdValue o2 = factory.getDatatypeIdValueFromJsonId(DatatypeIdValue.JSON_DT_TIME);
+		assertEquals(o1, o2);
+	}
+
+	@Test
+	public final void testGetDatatypeIdWithJsonString() {
+		DatatypeIdValue o1 = new DatatypeIdImpl(DatatypeIdValue.DT_STRING, DatatypeIdImpl.JSON_DT_STRING);
+		DatatypeIdValue o2 = factory.getDatatypeIdValueFromJsonId(DatatypeIdImpl.JSON_DT_STRING);
 		assertEquals(o1, o2);
 	}
 
@@ -122,8 +129,9 @@ public class DataObjectFactoryImplTest {
 		BigDecimal nv = new BigDecimal("0.123456789012345678901234567890123456789");
 		BigDecimal lb = new BigDecimal("0.123456789012345678901234567890123456788");
 		BigDecimal ub = new BigDecimal("0.123456789012345678901234567890123456790");
-		QuantityValue o1 = new QuantityValueImpl(nv, lb, ub, "unit");
-		QuantityValue o2 = factory.getQuantityValue(nv, lb, ub, "unit");
+		ItemIdValue unit = ItemIdValueImpl.fromIri("http://wikidata.org/entity/Q123");
+		QuantityValue o1 = new QuantityValueImpl(nv, lb, ub, unit);
+		QuantityValue o2 = factory.getQuantityValue(nv, lb, ub, unit);
 		assertEquals(o1, o2);
 	}
 
@@ -135,7 +143,7 @@ public class DataObjectFactoryImplTest {
 				"0.123456789012345678901234567890123456788");
 		BigDecimal ub = new BigDecimal(
 				"0.123456789012345678901234567890123456790");
-		QuantityValue o1 = new QuantityValueImpl(nv, lb, ub, "1");
+		QuantityValue o1 = new QuantityValueImpl(nv, lb, ub, (ItemIdValue)null);
 		QuantityValue o2 = factory.getQuantityValue(nv, lb, ub);
 		assertEquals(o1, o2);
 	}
@@ -144,8 +152,9 @@ public class DataObjectFactoryImplTest {
 	public final void testGetQuantityValueNoBounds() {
 		BigDecimal nv = new BigDecimal(
 				"0.123456789012345678901234567890123456789");
-		QuantityValue o1 = new QuantityValueImpl(nv, null, null, "unit");
-		QuantityValue o2 = factory.getQuantityValue(nv, "unit");
+		ItemIdValue unit = ItemIdValueImpl.fromIri("http://wikidata.org/entity/Q2334");
+		QuantityValue o1 = new QuantityValueImpl(nv, null, null, unit);
+		QuantityValue o2 = factory.getQuantityValue(nv, unit);
 		assertEquals(o1, o2);
 	}
 
@@ -153,7 +162,7 @@ public class DataObjectFactoryImplTest {
 	public final void testGetQuantityValueNoBoundsAndUnits() {
 		BigDecimal nv = new BigDecimal(
 				"0.123456789012345678901234567890123456789");
-		QuantityValue o1 = new QuantityValueImpl(nv, null, null, "1");
+		QuantityValue o1 = new QuantityValueImpl(nv, null, null, (ItemIdValue)null);
 		QuantityValue o2 = factory.getQuantityValue(nv);
 		assertEquals(o1, o2);
 	}
@@ -240,7 +249,7 @@ public class DataObjectFactoryImplTest {
 				Collections.emptyList(),
 				Collections.emptyList(),
 				Collections.emptyList(),
-				factory.getDatatypeIdValue(DatatypeIdValue.DT_TIME),
+				factory.getDatatypeIdValueFromJsonId(DatatypeIdValue.JSON_DT_TIME),
 				0);
 		PropertyDocument o2 = factory.getPropertyDocument(
 				factory.getPropertyIdValue("P42", "foo"),
@@ -248,7 +257,7 @@ public class DataObjectFactoryImplTest {
 				Collections.emptyList(),
 				Collections.emptyList(),
 				Collections.emptyList(),
-				factory.getDatatypeIdValue(DatatypeIdValue.DT_TIME),
+				factory.getDatatypeIdValueFromJsonId(DatatypeIdValue.JSON_DT_TIME),
 				0);
 		assertEquals(o1, o2);
 	}

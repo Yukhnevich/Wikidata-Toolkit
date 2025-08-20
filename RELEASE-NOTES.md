@@ -1,6 +1,150 @@
 Wikidata Toolkit Release Notes
 ==============================
 
+Version 0.16.0
+--------------
+
+New feature:
+* Expose detailed error messages in MediaWiki API errors (#911)
+
+Version 0.15.3
+--------------
+
+Bug fix:
+* Download of online dumps was fixed (#872)
+
+Incompatible change:
+* Minimum Java version changed from 8 to 11 (#839)
+
+Versions 0.15.0 to 0.15.2 are skipped because of publishing issues.
+
+Version 0.14.7
+--------------
+
+Bug fix:
+* Reset CSRF & login tokens when a login error happens (#442)
+
+Version 0.14.6
+--------------
+
+Small improvement:
+* The new Wikibase editing API returns the id of the revision of the last edit made (#795)
+
+Version 0.14.5
+--------------
+
+Bug fixes:
+* fetching of MediaInfo entities by title, when they contain a dash (#777)
+* clear the CSRF editing token if it is no longer valid (#442)
+
+Version 0.14.4
+--------------
+
+Bug fixes:
+* fix deserialization of lexemes, workaround for https://phabricator.wikimedia.org/T305660
+
+Version 0.14.3
+--------------
+
+Bug fixes:
+* fix fetching of Mids from filenames in the case where multiple filenames do not exist (#745)
+
+Version 0.14.2
+--------------
+
+Bug fixes:
+* add `uselang` as optional parameter for wbsearchentities action (#239)
+
+Version 0.14.1
+--------------
+
+Bug fixes:
+* fix error handling in newly supported clientLogin method
+* fix error in deserialization of properties with unknown datatypes
+
+Deprecations:
+* the IRI representation of datatypes in `wdtk-datamodel` is deprecated.
+  If you rely on it, then use it in `wdtk-rdf`, since this is specific to the RDF
+  serialization of the datamodel. Use the strings found in the JSON serialization
+  of properties to identify datatypes instead.
+
+Version 0.14.0
+--------------
+
+New feature:
+* login to Wikibase via the recommended API for normal login/password login
+
+Bug fixes:
+* add explicit dependency to okhttp, to avoid linkage issues
+* upgrade to okhttp 4.10.0
+
+Version 0.13.5
+--------------
+
+* downgraded okhttp to 4.2.2 to solve a linkage error (issue #600). We anticipate that this will be reverted once a stable version of okhttp 5 is available and a viable way to avoid such a linkage error is found.
+
+Version 0.13.4
+--------------
+
+* updated okhttp to 5.0.0-alpha.10 in the hope that it solves a linkage error
+* registered the EDTF datatype
+
+Version 0.13.3
+--------------
+
+* fixed media type when uploading files to a MediaWiki API endpoint
+
+Version 0.13.2
+--------------
+
+* new method to create an EntityDocument independently of its type
+* new utility method to execute an authenticated HTTP method which posts files 
+
+Version 0.13.1
+--------------
+
+Minor changes to the CI configuration for artifact deployment in Maven Central, no changes in the library itself.
+
+Version 0.13.0
+--------------
+
+New features:
+* New API to edit Wikibase entities
+
+Bug fixes:
+* Fetching of non-existent Mids on Commons
+* Support for missing entity types in DatamodelConverter
+* Store QuantityValue units as ItemIdValue instead of String.
+* Allow lexeme lemma list to be empty.
+
+Version 0.12.1
+--------------
+
+Bug fixes:
+* Allows empty representation list in `FormDocument` to parse the most recent Wikidata dumps.
+
+Version 0.12.0
+--------------
+
+Bug fixes:
+* Allows empty gloss list in `SenseDocument` to parse the most recent Wikidata dumps.
+
+New features:
+* Allows fetching MediaInfo entities using `WikibaseDataFetcher`.
+* `WikibaseRevisionProcessor` now parses and exposes redirections between entities.
+* `OAuthApiConnection` to connect to Wikibase API using OAuth.
+* Allows to fetch the Wikibase edit lag.
+* Dump file compression is automatically guessed from the file name extensions.
+
+Incompatible changes:
+* More API client errors are now exposed as exception, allowing the API users to act on them. 
+* `OkHTTP` is now used in wikibaseapi-client and big revamp of the client internals with small breaking changes.
+* Deprecated methods removal across the codebase.
+
+Dependency upgrades:
+* Dropped unused Apache HTTP client dependency
+* Bump RDF4J to 3.6.4, Jackson to 2.12.3, Apache Commons IO to 2.8, Apache Commons Lang3 to 3.12.
+
 Version 0.11.1
 --------------
 

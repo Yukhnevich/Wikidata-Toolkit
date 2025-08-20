@@ -21,6 +21,7 @@ package org.wikidata.wdtk.datamodel.implementation;
  */
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.wikidata.wdtk.datamodel.helpers.Datamodel;
@@ -68,8 +69,10 @@ public class LexemeDocumentImplTest {
 
 	private final LexemeDocument ld1 = new LexemeDocumentImpl(lid, lexCat, language, lemmaList, statementGroups, forms, senses, 1234);
 	private final LexemeDocument ld2 = new LexemeDocumentImpl(lid, lexCat, language, lemmaList, statementGroups, forms, senses, 1234);
+	private final LexemeDocument ld3 = new LexemeDocumentImpl(lid, lexCat, language, lemmaList, statementGroups, Collections.emptyList(), Collections.emptyList(), 1234);
 
 	private final String JSON_LEXEME = "{\"type\":\"lexeme\",\"id\":\"L42\",\"lexicalCategory\":\"Q1\",\"language\":\"Q2\",\"lemmas\":{\"en\":{\"language\":\"en\",\"value\":\"lemma\"}},\"claims\":{\"P42\":[{\"rank\":\"normal\",\"id\":\"MyId\",\"mainsnak\":{\"property\":\"P42\",\"snaktype\":\"somevalue\"},\"type\":\"statement\"}]},\"forms\":[{\"type\":\"form\",\"id\":\"L42-F1\",\"representations\":{\"en\":{\"language\":\"en\",\"value\":\"foo\"}},\"grammaticalFeatures\":[],\"claims\":{}}],\"senses\":[{\"type\":\"sense\",\"id\":\"L42-S1\",\"glosses\":{\"en\":{\"language\":\"en\",\"value\":\"foo meaning\"}},\"claims\":{}}],\"lastrevid\":1234}";
+	private final String JSON_LEXEME_FOR_ISSUE_568 = "{\"type\":\"lexeme\",\"id\":\"L42\",\"lexicalCategory\":\"Q1\",\"language\":\"Q2\",\"lemmas\":{\"en\":{\"language\":\"en\",\"value\":\"lemma\"}},\"claims\":{\"P42\":[{\"rank\":\"normal\",\"id\":\"MyId\",\"mainsnak\":{\"property\":\"P42\",\"snaktype\":\"somevalue\"},\"type\":\"statement\"}]},\"forms\":{},\"senses\":{},\"lastrevid\":1234}";
 
 	@Test
 	public void fieldsAreCorrect() {
@@ -154,14 +157,14 @@ public class LexemeDocumentImplTest {
 		new LexemeDocumentImpl(lid, lexCat, null, lemmaList, statementGroups, forms, senses,  1234);
 	}
 
-	@Test(expected = NullPointerException.class)
-	public void lemmasNotNull() {
-		new LexemeDocumentImpl(lid, lexCat, language, null, statementGroups, forms, senses,  1234);
+	@Test
+	public void lemmasNull() {
+		assertEquals(Collections.emptyMap(), new LexemeDocumentImpl(lid, lexCat, language, null, statementGroups, forms, senses,  1234).getLemmas());
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void lemmasNotEmpty() {
-		new LexemeDocumentImpl(lid, lexCat, language, Collections.emptyList(), statementGroups, forms, senses,  1234);
+	@Test
+	public void lemmasEmpty() {
+		assertEquals(Collections.emptyMap(), new LexemeDocumentImpl(lid, lexCat, language, Collections.emptyList(), statementGroups, forms, senses,  1234).getLemmas());
 	}
 
 	@Test
@@ -204,6 +207,13 @@ public class LexemeDocumentImplTest {
 	public void sensesCanBeNull() {
 		LexemeDocument doc = new LexemeDocumentImpl(lid, lexCat, language, lemmaList, statementGroups, forms, null, 1234);
 		assertTrue(doc.getSenses().isEmpty());
+	}
+
+	@Test
+	public void testWithEntityId() {
+		assertEquals(LexemeIdValue.NULL, ld1.withEntityId(LexemeIdValue.NULL).getEntityId());
+		LexemeIdValue id = Datamodel.makeWikidataLexemeIdValue("L123");
+		assertEquals(id, ld1.withEntityId(id).getEntityId());
 	}
 
 	@Test
@@ -297,5 +307,12 @@ public class LexemeDocumentImplTest {
 	@Test
 	public void testLexemeToJava() throws IOException {
 		assertEquals(ld1, mapper.readValue(JSON_LEXEME, LexemeDocumentImpl.class));
+	}
+
+	@Test
+	public void testDeserializeLexemeWithJsonObjectInPlaceOfEmptyList() throws JsonProcessingException {
+		// test for https://github.com/Wikidata/Wikidata-Toolkit/issues/568
+		// phab: https://phabricator.wikimedia.org/T305660
+		assertEquals(ld3, mapper.readValue(JSON_LEXEME_FOR_ISSUE_568, LexemeDocumentImpl.class));
 	}
 }

@@ -1,5 +1,3 @@
-package org.wikidata.wdtk.datamodel.implementation;
-
 /*
  * #%L
  * Wikidata Toolkit Data Model
@@ -20,15 +18,23 @@ package org.wikidata.wdtk.datamodel.implementation;
  * #L%
  */
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Test;
-import org.wikidata.wdtk.datamodel.interfaces.QuantityValue;
+package org.wikidata.wdtk.datamodel.implementation;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
+import org.wikidata.wdtk.datamodel.interfaces.ItemIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.QuantityValue;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
 
 public class QuantityValueImplTest {
 
@@ -41,13 +47,15 @@ public class QuantityValueImplTest {
 	private final BigDecimal ub = new BigDecimal(
 			"0.123456789012345678901234567890123456790");
 	private final String unitMeter = "http://wikidata.org/entity/Q11573";
-	private final QuantityValue q1 = new QuantityValueImpl(nv, lb, ub, unitMeter);
-	private final QuantityValue q2 = new QuantityValueImpl(nv, lb, ub, unitMeter);
-	private final QuantityValue q3 = new QuantityValueImpl(nv, null, null, unitMeter);
-	private final QuantityValue q4 = new QuantityValueImpl(nv, lb, ub, "1");
-	private final QuantityValue q5 = new QuantityValueImpl(nv, lb, ub, "foobar");
+	private final ItemIdValue unitMeterId = ItemIdValueImpl.fromIri(unitMeter);
+	private final QuantityValue q1 = new QuantityValueImpl(nv, lb, ub, unitMeterId);
+	private final QuantityValue q2 = new QuantityValueImpl(nv, lb, ub, unitMeterId);
+	private final QuantityValue q3 = new QuantityValueImpl(nv, null, null, unitMeterId);
+	private final QuantityValue q4 = new QuantityValueImpl(nv, lb, ub, (ItemIdValue) null);
 	private static String JSON_QUANTITY_VALUE = "{\"value\":{\"amount\":\"+0.123456789012345678901234567890123456789\",\"lowerBound\":\"+0.123456789012345678901234567890123456788\",\"upperBound\":\"+0.123456789012345678901234567890123456790\",\"unit\":\"http://wikidata.org/entity/Q11573\"},\"type\":\"quantity\"}";
 	private static String JSON_UNBOUNDED_QUANTITY_VALUE = "{\"value\":{\"amount\":\"+0.123456789012345678901234567890123456789\",\"unit\":\"http://wikidata.org/entity/Q11573\"},\"type\":\"quantity\"}";
+	private static String JSON_INVALID_UNIT = "{\"value\":{\"amount\":\"+0.1234567890123\",\"unit\":\"not_a_url\"},\"type\":\"quantity\"}";
+
 
 	@Test
 	public void gettersWorking() {
@@ -66,9 +74,10 @@ public class QuantityValueImplTest {
 		assertNull(q4.getUnitItemId());
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
+	@SuppressWarnings("deprecation")
 	public void getUnitItemIdInvalidIri() {
-		q5.getUnitItemId();
+		assertThrows(IllegalArgumentException.class, () -> new QuantityValueImpl(nv, lb, ub, "foobar"));
 	}
 
 	@Test
@@ -77,10 +86,10 @@ public class QuantityValueImplTest {
 				"0.1234567890123456789012345678901234567895");
 		BigDecimal nvminus = new BigDecimal(
 				"0.1234567890123456789012345678901234567885");
-		QuantityValue q4 = new QuantityValueImpl(nvplus, lb, ub, unitMeter);
-		QuantityValue q5 = new QuantityValueImpl(nv, nvminus, ub, unitMeter);
-		QuantityValue q6 = new QuantityValueImpl(nv, lb, nvplus, unitMeter);
-		QuantityValue q7 = new QuantityValueImpl(nv, lb, ub, "1");
+		QuantityValue q4 = new QuantityValueImpl(nvplus, lb, ub, unitMeterId);
+		QuantityValue q5 = new QuantityValueImpl(nv, nvminus, ub, unitMeterId);
+		QuantityValue q6 = new QuantityValueImpl(nv, lb, nvplus, unitMeterId);
+		QuantityValue q7 = new QuantityValueImpl(nv, lb, ub, (ItemIdValue)null);
 
 		assertEquals(q1, q1);
 		assertEquals(q1, q2);
@@ -98,15 +107,15 @@ public class QuantityValueImplTest {
 		BigDecimal amount1 = new BigDecimal("4.00");
 		BigDecimal amount2 = new BigDecimal("4");
 		assertNotEquals(amount1, amount2);
-		QuantityValue quantity1 = new QuantityValueImpl(amount1, null, null, "1");
-		QuantityValue quantity2 = new QuantityValueImpl(amount2, null, null, "1");
+		QuantityValue quantity1 = new QuantityValueImpl(amount1, null, null, (ItemIdValue)null);
+		QuantityValue quantity2 = new QuantityValueImpl(amount2, null, null, (ItemIdValue)null);
 		assertNotEquals(quantity1, quantity2);
 	}
 	
 	@Test
 	public void faithfulJsonSerialization() {
 		BigDecimal amount = new BigDecimal("4.00");
-		QuantityValueImpl quantity = new QuantityValueImpl(amount, null, null, "1");
+		QuantityValueImpl quantity = new QuantityValueImpl(amount, null, null, (ItemIdValue)null);
 		assertEquals("+4.00", quantity.getValue().getAmountAsString());
 	}
 
@@ -115,39 +124,41 @@ public class QuantityValueImplTest {
 		assertEquals(q1.hashCode(), q2.hashCode());
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void numValueNotNull() {
-		new QuantityValueImpl(null, lb, ub, unitMeter);
+		assertThrows(NullPointerException.class, () -> new QuantityValueImpl(null, lb, ub, unitMeterId));
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void lowerBoundNotNull() {
-		new QuantityValueImpl(nv, null, ub, unitMeter);
+		assertThrows(NullPointerException.class, () -> new QuantityValueImpl(nv, null, ub, unitMeterId));
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void upperBoundNotNull() {
-		new QuantityValueImpl(nv, lb, null, unitMeter);
+		assertThrows(NullPointerException.class, () -> new QuantityValueImpl(nv, lb, null, unitMeterId));
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
+	@SuppressWarnings("deprecation")
 	public void unitNotNull() {
-		new QuantityValueImpl(nv, lb, ub, null);
+		assertThrows(NullPointerException.class, () -> new QuantityValueImpl(nv, lb, ub, (String) null));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
+	@SuppressWarnings("deprecation")
 	public void unitNotEmpty() {
-		new QuantityValueImpl(nv, lb, ub, "");
+		assertThrows(IllegalArgumentException.class, () -> new QuantityValueImpl(nv, lb, ub, (String) ""));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void lowerBoundNotGreaterNumVal() {
-		new QuantityValueImpl(lb, nv, ub, unitMeter);
+		assertThrows(IllegalArgumentException.class, () -> new QuantityValueImpl(lb, nv, ub, unitMeterId));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void numValNotGreaterLowerBound() {
-		new QuantityValueImpl(ub, lb, nv, unitMeter);
+		assertThrows(IllegalArgumentException.class, () -> new QuantityValueImpl(ub, lb, nv, unitMeterId));
 	}
 
 	@Test
@@ -158,6 +169,11 @@ public class QuantityValueImplTest {
 	@Test
 	public void testToJava() throws IOException {
 		assertEquals(q1, mapper.readValue(JSON_QUANTITY_VALUE, ValueImpl.class));
+	}
+	
+	@Test
+	public void testParseInvalidUnit() throws IOException {
+	    assertThrows(ValueInstantiationException.class, () -> mapper.readValue(JSON_INVALID_UNIT, ValueImpl.class));
 	}
 
 	@Test

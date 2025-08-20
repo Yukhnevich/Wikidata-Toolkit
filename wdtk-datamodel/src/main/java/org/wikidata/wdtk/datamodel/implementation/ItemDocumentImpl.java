@@ -1,5 +1,3 @@
-package org.wikidata.wdtk.datamodel.implementation;
-
 /*
  * #%L
  * Wikidata Toolkit Data Model
@@ -19,6 +17,7 @@ package org.wikidata.wdtk.datamodel.implementation;
  * limitations under the License.
  * #L%
  */
+package org.wikidata.wdtk.datamodel.implementation;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,8 +28,13 @@ import java.util.Set;
 import org.wikidata.wdtk.datamodel.helpers.Equality;
 import org.wikidata.wdtk.datamodel.helpers.Hash;
 import org.wikidata.wdtk.datamodel.helpers.ToString;
-import org.wikidata.wdtk.datamodel.interfaces.*;
-import org.apache.commons.lang3.Validate;
+import org.wikidata.wdtk.datamodel.interfaces.EntityDocument;
+import org.wikidata.wdtk.datamodel.interfaces.ItemDocument;
+import org.wikidata.wdtk.datamodel.interfaces.ItemIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.MonolingualTextValue;
+import org.wikidata.wdtk.datamodel.interfaces.SiteLink;
+import org.wikidata.wdtk.datamodel.interfaces.Statement;
+import org.wikidata.wdtk.datamodel.interfaces.StatementGroup;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -137,7 +141,7 @@ public class ItemDocumentImpl extends TermedStatementDocumentImpl
 	@JsonIgnore
 	@Override
 	public ItemIdValue getEntityId() {
-		return new ItemIdValueImpl(this.entityId, this.siteIri);
+		return new ItemIdValueImpl(entityId, siteIri);
 	}
 
 	@JsonProperty("sitelinks")
@@ -159,6 +163,11 @@ public class ItemDocumentImpl extends TermedStatementDocumentImpl
 	@Override
 	public String toString() {
 		return ToString.toString(this);
+	}
+
+	@Override
+	public ItemDocument withEntityId(ItemIdValue itemId) {
+		return new ItemDocumentImpl(itemId, labels, descriptions, aliases, claims, sitelinks, revisionId);
 	}
 
 	@Override

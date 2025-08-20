@@ -1,5 +1,3 @@
-package org.wikidata.wdtk.datamodel.helpers;
-
 /*
  * #%L
  * Wikidata Toolkit Data Model
@@ -19,6 +17,7 @@ package org.wikidata.wdtk.datamodel.helpers;
  * limitations under the License.
  * #L%
  */
+package org.wikidata.wdtk.datamodel.helpers;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,11 +25,44 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wikidata.wdtk.datamodel.interfaces.*;
+import org.wikidata.wdtk.datamodel.interfaces.Claim;
+import org.wikidata.wdtk.datamodel.interfaces.DataObjectFactory;
+import org.wikidata.wdtk.datamodel.interfaces.DatatypeIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.EntityIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.FormDocument;
+import org.wikidata.wdtk.datamodel.interfaces.FormIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.GlobeCoordinatesValue;
+import org.wikidata.wdtk.datamodel.interfaces.ItemDocument;
+import org.wikidata.wdtk.datamodel.interfaces.ItemIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.LexemeDocument;
+import org.wikidata.wdtk.datamodel.interfaces.LexemeIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.MediaInfoDocument;
+import org.wikidata.wdtk.datamodel.interfaces.MediaInfoIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.MonolingualTextValue;
+import org.wikidata.wdtk.datamodel.interfaces.NoValueSnak;
+import org.wikidata.wdtk.datamodel.interfaces.PropertyDocument;
+import org.wikidata.wdtk.datamodel.interfaces.PropertyIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.QuantityValue;
+import org.wikidata.wdtk.datamodel.interfaces.Reference;
+import org.wikidata.wdtk.datamodel.interfaces.SenseDocument;
+import org.wikidata.wdtk.datamodel.interfaces.SenseIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.SiteLink;
+import org.wikidata.wdtk.datamodel.interfaces.Snak;
+import org.wikidata.wdtk.datamodel.interfaces.SnakGroup;
+import org.wikidata.wdtk.datamodel.interfaces.SnakVisitor;
+import org.wikidata.wdtk.datamodel.interfaces.SomeValueSnak;
+import org.wikidata.wdtk.datamodel.interfaces.Statement;
+import org.wikidata.wdtk.datamodel.interfaces.StatementGroup;
+import org.wikidata.wdtk.datamodel.interfaces.StringValue;
+import org.wikidata.wdtk.datamodel.interfaces.TimeValue;
+import org.wikidata.wdtk.datamodel.interfaces.UnsupportedValue;
+import org.wikidata.wdtk.datamodel.interfaces.Value;
+import org.wikidata.wdtk.datamodel.interfaces.ValueSnak;
+import org.wikidata.wdtk.datamodel.interfaces.ValueVisitor;
 
 /**
  * Class to re-create data model objects using a specified factory. This is
@@ -96,6 +128,39 @@ public class DatamodelConverter implements SnakVisitor<Snak>,
 	public LexemeIdValue copy(LexemeIdValue object) {
 		return dataObjectFactory.getLexemeIdValue(object.getId(), object.getSiteIri());
 	}
+	
+	/**
+     * Copies a {@link FormIdValue}.
+     *
+     * @param object
+     *            object to copy
+     * @return copied object
+     */
+    public FormIdValue copy(FormIdValue object) {
+        return dataObjectFactory.getFormIdValue(object.getId(), object.getSiteIri());
+    }
+    
+    /**
+     * Copies a {@link SenseIdValue}.
+     *
+     * @param object
+     *            object to copy
+     * @return copied object
+     */
+    public SenseIdValue copy(SenseIdValue object) {
+        return dataObjectFactory.getSenseIdValue(object.getId(), object.getSiteIri());
+    }
+    
+    /**
+     * Copies a {@link MediaInfoIdValue}.
+     *
+     * @param object
+     *            object to copy
+     * @return copied object
+     */
+    public MediaInfoIdValue copy(MediaInfoIdValue object) {
+        return dataObjectFactory.getMediaInfoIdValue(object.getId(), object.getSiteIri());
+    }
 
 	/**
 	 * Copies a {@link DatatypeIdValue}.
@@ -105,7 +170,7 @@ public class DatamodelConverter implements SnakVisitor<Snak>,
 	 * @return copied object
 	 */
 	public DatatypeIdValue copy(DatatypeIdValue object) {
-		return dataObjectFactory.getDatatypeIdValue(object.getIri());
+		return dataObjectFactory.getDatatypeIdValueFromJsonId(object.getJsonString());
 	}
 
 	/**
@@ -148,10 +213,7 @@ public class DatamodelConverter implements SnakVisitor<Snak>,
 	}
 
 	/**
-	 * Copies a {@link MonolingualTextValue}. This method is not affected by the
-	 * language filter option (see
-	 * {@link DatamodelConverter#setOptionLanguageFilter(Set)}).
-	 *
+	 * Copies a {@link MonolingualTextValue}
 	 * @param object
 	 *            object to copy
 	 * @return copied object
@@ -170,7 +232,7 @@ public class DatamodelConverter implements SnakVisitor<Snak>,
 	public QuantityValue copy(QuantityValue object) {
 		return dataObjectFactory.getQuantityValue(
 				object.getNumericValue(), object.getLowerBound(),
-				object.getUpperBound(), object.getUnit());
+				object.getUpperBound(), object.getUnitItemId());
 	}
 	
 	/**
@@ -296,9 +358,6 @@ public class DatamodelConverter implements SnakVisitor<Snak>,
 
 	/**
 	 * Copies a {@link StatementGroup}.
-	 * <p>
-	 * This method ignores filters set via {@link #setOptionPropertyFilter(Set)}.
-	 *
 	 * @param object
 	 *            object to copy
 	 * @return copied object
@@ -313,9 +372,6 @@ public class DatamodelConverter implements SnakVisitor<Snak>,
 
 	/**
 	 * Copies a {@link SiteLink}.
-	 * <p>
-	 * This method is not affected by the setting made via
-	 * {@link #setOptionSiteLinkFilter(Set)}.
 	 *
 	 * @param object
 	 *            object to copy
@@ -361,6 +417,74 @@ public class DatamodelConverter implements SnakVisitor<Snak>,
 				copySiteLinks(object.getSiteLinks()),
 				object.getRevisionId());
 	}
+	
+	/**
+	 * Copies a {@link MediaInfoDocument}.
+	 * 
+	 * @param object
+	 *            object to copy
+	 * @return copied object
+	 */
+	public MediaInfoDocument copy(MediaInfoDocument object) {
+	    return dataObjectFactory.getMediaInfoDocument(
+	            copy(object.getEntityId()),
+	            copyMonoLingualTextValues(object.getLabels().values()),
+	            copyStatementGroups(object.getStatementGroups()),
+	            object.getRevisionId());
+	}
+	
+	/**
+     * Copies a {@link LexemeDocument}.
+     * 
+     * @param object
+     *            object to copy
+     * @return copied object
+     */
+    public LexemeDocument copy(LexemeDocument object) {
+        return dataObjectFactory.getLexemeDocument(
+                copy(object.getEntityId()),
+                copy(object.getLexicalCategory()),
+                copy(object.getLanguage()),
+                copyMonoLingualTextValues(object.getLemmas().values()),
+                copyStatementGroups(object.getStatementGroups()),
+                copyFormDocuments(object.getForms()),
+                copySenseDocuments(object.getSenses()),
+                object.getRevisionId());
+    }
+    
+    /**
+     * Copies a {@link FormDocument}.
+     * 
+     * @param object
+     *            object to copy
+     * @return copied object
+     */
+    public FormDocument copy(FormDocument object) {
+        return dataObjectFactory.getFormDocument(
+                copy(object.getEntityId()),
+                copyMonoLingualTextValues(object.getRepresentations().values()),
+                copyItemIds(object.getGrammaticalFeatures()),
+                copyStatementGroups(object.getStatementGroups()),
+                object.getRevisionId());
+    }
+    
+
+    /**
+     * Copies a {@link SenseDocument}.
+     * 
+     * @param object
+     *            object to copy
+     * @return copied object
+     */
+    public SenseDocument copy(SenseDocument object) {
+        return dataObjectFactory.getSenseDocument(
+                copy(object.getEntityId()),
+                copyMonoLingualTextValues(object.getGlosses().values()),
+                copyStatementGroups(object.getStatementGroups()),
+                object.getRevisionId());
+    }
+    
+    
 
 	/**
 	 * Copies a {@link Snak}.
@@ -405,6 +529,14 @@ public class DatamodelConverter implements SnakVisitor<Snak>,
 			return copy((ItemIdValue) value);
 		} else if (value instanceof PropertyIdValue) {
 			return copy((PropertyIdValue) value);
+        } else if (value instanceof LexemeIdValue) {
+            return copy((LexemeIdValue) value);
+        } else if (value instanceof FormIdValue) {
+            return copy((FormIdValue) value);
+        } else if (value instanceof SenseIdValue) {
+            return copy((SenseIdValue) value);
+        } else if (value instanceof MediaInfoIdValue) {
+            return copy((MediaInfoIdValue) value);
 		} else {
 			throw new UnsupportedOperationException(
 					"Cannot convert entity id value: " + value.getClass());
@@ -538,5 +670,42 @@ public class DatamodelConverter implements SnakVisitor<Snak>,
 		}
 		return result;
 	}
+	
+	/**
+	 * Copies a list of item ids.
+	 * 
+	 * @param ids
+	 * @return
+	 */
+    private List<ItemIdValue> copyItemIds(List<ItemIdValue> ids) {
+        return ids.stream()
+                .map(id -> copy(id))
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Copies a list of sense documents.
+     * 
+     * @param senses
+     * @return
+     */
+    private List<SenseDocument> copySenseDocuments(List<SenseDocument> senses) {
+        return senses.stream()
+                .map(sense -> copy(sense))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Copies a list of form documents.
+     * 
+     * @param forms
+     * @return
+     */
+    private List<FormDocument> copyFormDocuments(List<FormDocument> forms) {
+        return forms.stream()
+                .map(form -> copy(form))
+                .collect(Collectors.toList());
+    }
+
 
 }

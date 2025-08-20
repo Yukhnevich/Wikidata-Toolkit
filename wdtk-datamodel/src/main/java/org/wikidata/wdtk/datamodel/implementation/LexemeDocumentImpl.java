@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.commons.lang3.Validate;
 import org.wikidata.wdtk.datamodel.helpers.Equality;
 import org.wikidata.wdtk.datamodel.helpers.Hash;
+import org.wikidata.wdtk.datamodel.helpers.LexemeDeserializer;
 import org.wikidata.wdtk.datamodel.helpers.ToString;
 import org.wikidata.wdtk.datamodel.interfaces.*;
 
@@ -38,6 +39,7 @@ import java.util.regex.Pattern;
  * @author Thomas Pellissier Tanon
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonDeserialize(using = LexemeDeserializer.class)
 public class LexemeDocumentImpl extends StatementDocumentImpl implements LexemeDocument {
 
 	private final ItemIdValue lexicalCategory;
@@ -91,11 +93,7 @@ public class LexemeDocumentImpl extends StatementDocumentImpl implements LexemeD
 		this.lexicalCategory = lexicalCategory;
 		Validate.notNull(language, "Lexeme language should not be null");
 		this.language = language;
-		Validate.notNull(lemmas, "Lexeme lemmas should not be null");
-		if(lemmas.isEmpty()) {
-			throw new IllegalArgumentException("Lexemes should have at least one lemma");
-		}
-		this.lemmas = constructTermMap(lemmas);
+		this.lemmas = (lemmas == null || lemmas.isEmpty()) ? Collections.emptyMap() : constructTermMap(lemmas);
 		this.forms = (forms == null) ? Collections.emptyList() : forms;
 		this.senses = (senses == null) ? Collections.emptyList() : senses;
 
@@ -108,14 +106,14 @@ public class LexemeDocumentImpl extends StatementDocumentImpl implements LexemeD
 	 * deserialization. Should only be used by Jackson for this very purpose.
 	 */
 	@JsonCreator
-	LexemeDocumentImpl(
+	public LexemeDocumentImpl(
 			@JsonProperty("id") String jsonId,
 			@JsonProperty("lexicalCategory") String lexicalCategory,
 			@JsonProperty("language") String language,
-			@JsonProperty("lemmas") @JsonDeserialize(contentAs=TermImpl.class) Map<String, MonolingualTextValue> lemmas,
+			@JsonProperty("lemmas") @JsonDeserialize(contentAs = TermImpl.class) Map<String, MonolingualTextValue> lemmas,
 			@JsonProperty("claims") Map<String, List<StatementImpl.PreStatement>> claims,
-			@JsonProperty("forms") @JsonDeserialize(contentAs=FormDocumentImpl.class) List<FormDocument> forms,
-			@JsonProperty("senses") @JsonDeserialize(contentAs=SenseDocumentImpl.class) List<SenseDocument> senses,
+			@JsonProperty("forms") @JsonDeserialize(contentAs = FormDocumentImpl.class) List<FormDocument> forms,
+			@JsonProperty("senses") @JsonDeserialize(contentAs = SenseDocumentImpl.class) List<SenseDocument> senses,
 			@JsonProperty("lastrevid") long revisionId,
 			@JacksonInject("siteIri") String siteIri) {
 		super(jsonId, claims, revisionId, siteIri);
@@ -123,11 +121,7 @@ public class LexemeDocumentImpl extends StatementDocumentImpl implements LexemeD
 		this.lexicalCategory = new ItemIdValueImpl(lexicalCategory, siteIri);
 		Validate.notNull(language, "Lexeme language should not be null");
 		this.language = new ItemIdValueImpl(language, siteIri);
-		Validate.notNull(lemmas, "Lexeme lemmas should not be null");
-		if(lemmas.isEmpty()) {
-			throw new IllegalArgumentException("Lexemes should have at least one lemma");
-		}
-		this.lemmas = lemmas;
+		this.lemmas = (lemmas == null) ? Collections.emptyMap() : lemmas;
 		this.forms = (forms == null) ? Collections.emptyList() : forms;
 		this.senses = (senses == null) ? Collections.emptyList() : senses;
 
@@ -195,7 +189,7 @@ public class LexemeDocumentImpl extends StatementDocumentImpl implements LexemeD
 	@JsonIgnore
 	@Override
 	public LexemeIdValue getEntityId() {
-		return new LexemeIdValueImpl(this.entityId, this.siteIri);
+		return new LexemeIdValueImpl(entityId, siteIri);
 	}
 
 	@JsonIgnore
@@ -274,6 +268,12 @@ public class LexemeDocumentImpl extends StatementDocumentImpl implements LexemeD
 	@Override
 	public String toString() {
 		return ToString.toString(this);
+	}
+
+	@Override
+	public LexemeDocument withEntityId(LexemeIdValue newEntityId) {
+		return new LexemeDocumentImpl(newEntityId, lexicalCategory, language, lemmas,
+				claims, forms, senses, revisionId, nextFormId, nextSenseId);
 	}
 
 	@Override

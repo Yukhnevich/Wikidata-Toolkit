@@ -1,5 +1,3 @@
-package org.wikidata.wdtk.datamodel.implementation;
-
 /*
  * #%L
  * Wikidata Toolkit Data Model
@@ -19,6 +17,8 @@ package org.wikidata.wdtk.datamodel.implementation;
  * limitations under the License.
  * #L%
  */
+
+package org.wikidata.wdtk.datamodel.implementation;
 
 import static org.junit.Assert.*;
 
@@ -103,4 +103,10 @@ public class PropertyIdValueImplTest {
 	public void testToJavaWithoutNumericalID() throws IOException {
 		assertEquals(prop1, mapper.readValue(JSON_PROPERTY_ID_VALUE_WITHOUT_NUMERICAL_ID, ValueImpl.class));
 	}
+
+	@Test
+	public void testIsPlaceholder() {
+		assertFalse(prop1.isPlaceholder());
+	}
+
 }

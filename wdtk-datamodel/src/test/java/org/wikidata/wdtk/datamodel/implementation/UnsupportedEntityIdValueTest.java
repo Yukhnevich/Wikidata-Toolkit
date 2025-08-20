@@ -1,5 +1,3 @@
-package org.wikidata.wdtk.datamodel.implementation;
-
 /*-
  * #%L
  * Wikidata Toolkit Data Model
@@ -20,7 +18,10 @@ package org.wikidata.wdtk.datamodel.implementation;
  * #L%
  */
 
+package org.wikidata.wdtk.datamodel.implementation;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 
@@ -114,4 +115,10 @@ public class UnsupportedEntityIdValueTest {
 		assertEquals("shiny", secondValue.getEntityTypeJsonString());
 		assertNull(noType.getEntityTypeJsonString());
 	}
+
+	@Test
+	public void testIsPlaceholder() {
+		assertFalse(firstValue.isPlaceholder());
+	}
+
 }

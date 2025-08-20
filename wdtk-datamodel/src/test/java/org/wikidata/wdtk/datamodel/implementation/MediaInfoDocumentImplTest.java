@@ -33,6 +33,21 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.wikidata.wdtk.datamodel.helpers.Datamodel;
+import org.wikidata.wdtk.datamodel.helpers.DatamodelMapper;
+import org.wikidata.wdtk.datamodel.interfaces.Claim;
+import org.wikidata.wdtk.datamodel.interfaces.DatatypeIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.MediaInfoDocument;
+import org.wikidata.wdtk.datamodel.interfaces.MediaInfoIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.MonolingualTextValue;
+import org.wikidata.wdtk.datamodel.interfaces.PropertyDocument;
+import org.wikidata.wdtk.datamodel.interfaces.Statement;
+import org.wikidata.wdtk.datamodel.interfaces.StatementGroup;
+import org.wikidata.wdtk.datamodel.interfaces.StatementRank;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import static org.junit.Assert.*;
 
 public class MediaInfoDocumentImplTest {
@@ -150,7 +165,14 @@ public class MediaInfoDocumentImplTest {
 		assertEquals(s, statements.next());
 		assertFalse(statements.hasNext());
 	}
-	
+
+	@Test
+	public void testWithEntityId() {
+		assertEquals(MediaInfoIdValue.NULL, mi1.withEntityId(MediaInfoIdValue.NULL).getEntityId());
+		MediaInfoIdValue id = Datamodel.makeWikimediaCommonsMediaInfoIdValue("M123");
+		assertEquals(id, mi1.withEntityId(id).getEntityId());
+	}
+
 	@Test
 	public void testWithRevisionId() {
 		assertEquals(1235L, mi1.withRevisionId(1235L).getRevisionId());

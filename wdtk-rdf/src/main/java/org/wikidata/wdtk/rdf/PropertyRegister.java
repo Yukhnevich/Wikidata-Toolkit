@@ -348,8 +348,8 @@ public class PropertyRegister {
 				continue;
 			}
 
-			String datatype = ((PropertyDocument) propertyDocument)
-					.getDatatype().getIri();
+			String datatype = AbstractRdfConverter.getDatatypeIri(((PropertyDocument) propertyDocument)
+					.getDatatype());
 			this.datatypes.put(entry.getKey(), datatype);
 			logger.info("Fetched type information for property "
 					+ entry.getKey() + " online: " + datatype);
@@ -391,6 +391,10 @@ public class PropertyRegister {
 	 *
 	 * @param endpoint URI of the SPARQL service to use, for example "https://query.wikidata.org/sparql"
 	 */
+	/*
+	 * Suppress spurious warning about IRI.toString() caused by deprecation of base URI interface.
+	 */
+	@SuppressWarnings("deprecation")
 	public void fetchUsingSPARQL(URI endpoint) {
 		try {
 			// this query is written without assuming any PREFIXES like wd: or wdt: to ensure it is as portable

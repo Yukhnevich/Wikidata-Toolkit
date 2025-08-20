@@ -1,5 +1,3 @@
-package org.wikidata.wdtk.datamodel.implementation;
-
 /*
  * #%L
  * Wikidata Toolkit Data Model
@@ -19,24 +17,29 @@ package org.wikidata.wdtk.datamodel.implementation;
  * limitations under the License.
  * #L%
  */
+package org.wikidata.wdtk.datamodel.implementation;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.wikidata.wdtk.datamodel.helpers.Equality;
-import org.wikidata.wdtk.datamodel.helpers.Hash;
-import org.wikidata.wdtk.datamodel.helpers.ToString;
-import org.wikidata.wdtk.datamodel.interfaces.*;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.Validate;
+import org.wikidata.wdtk.datamodel.helpers.Equality;
+import org.wikidata.wdtk.datamodel.helpers.Hash;
+import org.wikidata.wdtk.datamodel.helpers.ToString;
+import org.wikidata.wdtk.datamodel.interfaces.DatatypeIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.EntityDocument;
+import org.wikidata.wdtk.datamodel.interfaces.MonolingualTextValue;
+import org.wikidata.wdtk.datamodel.interfaces.PropertyDocument;
+import org.wikidata.wdtk.datamodel.interfaces.PropertyIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.Statement;
+import org.wikidata.wdtk.datamodel.interfaces.StatementGroup;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Jackson implementation of {@link PropertyDocument}.
@@ -105,7 +108,7 @@ public class PropertyDocumentImpl extends TermedStatementDocumentImpl
 			@JsonProperty("lastrevid") long revisionId,
 			@JacksonInject("siteIri") String siteIri) {
         super(jsonId, labels, descriptions, aliases, claims, revisionId, siteIri);
-        this.datatype = new DatatypeIdImpl(DatatypeIdImpl.getDatatypeIriFromJsonDatatype(datatype));
+        this.datatype = new DatatypeIdImpl(DatatypeIdImpl.getDatatypeIriFromJsonDatatype(datatype), datatype);
     }
 
     /**
@@ -139,7 +142,7 @@ public class PropertyDocumentImpl extends TermedStatementDocumentImpl
 	@JsonIgnore
 	@Override
 	public PropertyIdValue getEntityId() {
-		return new PropertyIdValueImpl(this.entityId, this.siteIri);
+		return new PropertyIdValueImpl(entityId, siteIri);
 	}
 
 	@JsonIgnore
@@ -163,6 +166,11 @@ public class PropertyDocumentImpl extends TermedStatementDocumentImpl
 		return ToString.toString(this);
 	}
 	
+	@Override
+	public PropertyDocument withEntityId(PropertyIdValue newEntityId) {
+		return new PropertyDocumentImpl(newEntityId, labels, descriptions, aliases, claims, datatype, revisionId);
+	}
+
 	@Override
 	public PropertyDocument withRevisionId(long newRevisionId) {
 		return new PropertyDocumentImpl(getEntityId(),

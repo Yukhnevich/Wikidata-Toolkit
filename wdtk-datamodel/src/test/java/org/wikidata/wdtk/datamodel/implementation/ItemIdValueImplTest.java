@@ -1,18 +1,3 @@
-package org.wikidata.wdtk.datamodel.implementation;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-
-import org.junit.Test;
-import org.wikidata.wdtk.datamodel.helpers.Datamodel;
-import org.wikidata.wdtk.datamodel.helpers.DatamodelMapper;
-import org.wikidata.wdtk.datamodel.interfaces.EntityIdValue;
-import org.wikidata.wdtk.datamodel.interfaces.UnsupportedEntityIdValue;
-import org.wikidata.wdtk.datamodel.interfaces.Value;
-
 /*
  * #%L
  * Wikidata Toolkit Data Model
@@ -32,6 +17,20 @@ import org.wikidata.wdtk.datamodel.interfaces.Value;
  * limitations under the License.
  * #L%
  */
+
+package org.wikidata.wdtk.datamodel.implementation;
+
+import static org.junit.Assert.*;
+
+import java.io.IOException;
+
+import org.junit.Test;
+import org.wikidata.wdtk.datamodel.helpers.Datamodel;
+import org.wikidata.wdtk.datamodel.helpers.DatamodelMapper;
+import org.wikidata.wdtk.datamodel.interfaces.EntityIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.UnsupportedEntityIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.Value;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -148,6 +147,11 @@ public class ItemIdValueImplTest {
 	@Test(expected = JsonMappingException.class)
 	public void testToJavaUnsupportedWithoutId() throws IOException {
 		mapper.readValue(JSON_ITEM_ID_VALUE_UNSUPPORTED_NO_ID, ValueImpl.class);
+	}
+
+	@Test
+	public void testIsPlaceholder() {
+		assertFalse(item1.isPlaceholder());
 	}
 
 }

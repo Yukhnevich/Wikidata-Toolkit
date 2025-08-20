@@ -1,5 +1,3 @@
-package org.wikidata.wdtk.datamodel.implementation;
-
 /*
  * #%L
  * Wikidata Toolkit Data Model
@@ -20,12 +18,9 @@ package org.wikidata.wdtk.datamodel.implementation;
  * #L%
  */
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Test;
-import org.wikidata.wdtk.datamodel.helpers.DatamodelMapper;
-import org.wikidata.wdtk.datamodel.interfaces.*;
+package org.wikidata.wdtk.datamodel.implementation;
+
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,7 +28,23 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
+import org.wikidata.wdtk.datamodel.helpers.Datamodel;
+import org.wikidata.wdtk.datamodel.helpers.DatamodelMapper;
+import org.wikidata.wdtk.datamodel.interfaces.Claim;
+import org.wikidata.wdtk.datamodel.interfaces.DatatypeIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.ItemDocument;
+import org.wikidata.wdtk.datamodel.interfaces.ItemIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.MonolingualTextValue;
+import org.wikidata.wdtk.datamodel.interfaces.PropertyDocument;
+import org.wikidata.wdtk.datamodel.interfaces.SiteLink;
+import org.wikidata.wdtk.datamodel.interfaces.Statement;
+import org.wikidata.wdtk.datamodel.interfaces.StatementGroup;
+import org.wikidata.wdtk.datamodel.interfaces.StatementRank;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ItemDocumentImplTest {
 
@@ -227,7 +238,14 @@ public class ItemDocumentImplTest {
 		assertEquals(s, statements.next());
 		assertFalse(statements.hasNext());
 	}
-	
+
+	@Test
+	public void testWithEntityId() {
+		assertEquals(ItemIdValue.NULL, ir1.withEntityId(ItemIdValue.NULL).getEntityId());
+		ItemIdValue id = Datamodel.makeWikidataItemIdValue("Q123");
+		assertEquals(id, ir1.withEntityId(id).getEntityId());
+	}
+
 	@Test
 	public void testWithRevisionId() {
 		assertEquals(1235L, ir1.withRevisionId(1235L).getRevisionId());
@@ -390,6 +408,18 @@ public class ItemDocumentImplTest {
 				.with(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT)
 				.readValue(JSON_ITEM_EMPTY_ARRAYS)
 		);
+	}
+
+	@Test
+	public void testGetJsonId() throws Exception {
+		ItemDocument item = Datamodel.makeItemDocument(
+				Datamodel.makeWikidataItemIdValue("Q42"),
+				Collections.singletonList(Datamodel.makeMonolingualTextValue("en", "label")),
+				Collections.singletonList(Datamodel.makeMonolingualTextValue("en", "desc")),
+				Collections.singletonList(Datamodel.makeMonolingualTextValue("en", "alias")),
+				Collections.emptyList(),
+				Collections.singletonMap("enwiki", Datamodel.makeSiteLink("foo", "enwiki", Collections.emptyList())));
+		assertEquals("Q42", ((ItemDocumentImpl) (item)).getJsonId());
 	}
 
 }

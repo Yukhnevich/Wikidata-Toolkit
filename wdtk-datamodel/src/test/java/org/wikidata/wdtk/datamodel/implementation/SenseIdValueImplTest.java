@@ -1,5 +1,3 @@
-package org.wikidata.wdtk.datamodel.implementation;
-
 /*
  * #%L
  * Wikidata Toolkit Data Model
@@ -20,16 +18,20 @@ package org.wikidata.wdtk.datamodel.implementation;
  * #L%
  */
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+package org.wikidata.wdtk.datamodel.implementation;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+
+import java.io.IOException;
+
 import org.junit.Test;
 import org.wikidata.wdtk.datamodel.helpers.DatamodelMapper;
 import org.wikidata.wdtk.datamodel.interfaces.EntityIdValue;
 
-import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class SenseIdValueImplTest {
 
@@ -127,4 +129,10 @@ public class SenseIdValueImplTest {
 	public void testToJavaWithoutNumericalID() throws IOException {
 		assertEquals(sense1, mapper.readValue(JSON_SENSE_ID_VALUE_WITHOUT_TYPE, ValueImpl.class));
 	}
+
+	@Test
+	public void testIsPlaceholder() {
+		assertFalse(sense1.isPlaceholder());
+	}
+
 }

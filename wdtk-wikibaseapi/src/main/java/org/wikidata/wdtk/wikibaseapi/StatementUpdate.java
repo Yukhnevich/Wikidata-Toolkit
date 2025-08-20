@@ -1,5 +1,3 @@
-package org.wikidata.wdtk.wikibaseapi;
-
 /*
  * #%L
  * Wikidata Toolkit Wikibase API
@@ -19,33 +17,52 @@ package org.wikidata.wdtk.wikibaseapi;
  * limitations under the License.
  * #L%
  */
+package org.wikidata.wdtk.wikibaseapi;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wikidata.wdtk.datamodel.helpers.Datamodel;
 import org.wikidata.wdtk.datamodel.helpers.DatamodelMapper;
 import org.wikidata.wdtk.datamodel.helpers.JsonSerializer;
 import org.wikidata.wdtk.datamodel.implementation.StatementImpl;
-import org.wikidata.wdtk.datamodel.interfaces.*;
+import org.wikidata.wdtk.datamodel.interfaces.Claim;
+import org.wikidata.wdtk.datamodel.interfaces.EntityIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.EntityUpdate;
+import org.wikidata.wdtk.datamodel.interfaces.PropertyIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.Reference;
+import org.wikidata.wdtk.datamodel.interfaces.Snak;
+import org.wikidata.wdtk.datamodel.interfaces.SnakGroup;
+import org.wikidata.wdtk.datamodel.interfaces.Statement;
+import org.wikidata.wdtk.datamodel.interfaces.StatementDocument;
+import org.wikidata.wdtk.datamodel.interfaces.StatementGroup;
+import org.wikidata.wdtk.datamodel.interfaces.StatementRank;
+import org.wikidata.wdtk.datamodel.interfaces.Value;
 import org.wikidata.wdtk.wikibaseapi.apierrors.MediaWikiApiErrorException;
 
-import java.io.IOException;
-import java.util.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
+ * @deprecated Use {@link WikibaseDataEditor#editEntityDocument(EntityUpdate, boolean, String, List)} instead.
  * Class to plan a statement update operation.
  *
  * @author Markus Kroetzsch
  *
  */
+@Deprecated
 public class StatementUpdate {
 
 	static final Logger logger = LoggerFactory.getLogger(StatementUpdate.class);
@@ -603,11 +620,11 @@ public class StatementUpdate {
 	 * 		the response as returned by Mediawiki
 	 * @return
 	 * 		the new revision id of the edited entity
-	 * @throws JsonMappingException 
+	 * @throws JsonProcessingException 
 	 */
-	protected long getRevisionIdFromResponse(JsonNode response) throws JsonMappingException {
+	protected long getRevisionIdFromResponse(JsonNode response) throws JsonProcessingException {
 		if(response == null) {
-			throw new JsonMappingException("API response is null");
+			throw new MalformedResponseException("API response is null");
 		}
 		JsonNode entity = null;
 		if(response.has("entity")) {
@@ -618,7 +635,7 @@ public class StatementUpdate {
 		if(entity != null && entity.has("lastrevid")) {
 			return entity.path("lastrevid").asLong();
 		}
-		throw new JsonMappingException("The last revision id could not be found in API response");
+		throw new MalformedResponseException("The last revision id could not be found in API response");
 	}
 	
     /**
@@ -636,12 +653,12 @@ public class StatementUpdate {
      */
 	protected <T> T getDatamodelObjectFromResponse(JsonNode response, List<String> path, Class<T> targetClass) throws JsonProcessingException {
 		if(response == null) {
-			throw new JsonMappingException("The API response is null");
+			throw new MalformedResponseException("The API response is null");
 		}
 		JsonNode currentNode = response;
 		for(String field : path) {
 			if (!currentNode.has(field)) {
-				throw new JsonMappingException("Field '"+field+"' not found in API response.");
+				throw new MalformedResponseException("Field '"+field+"' not found in API response.");
 			}
 			currentNode = currentNode.path(field);
 		}

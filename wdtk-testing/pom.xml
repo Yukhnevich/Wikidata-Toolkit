@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.wikidata.wdtk</groupId>
 		<artifactId>wdtk-parent</artifactId>
-		<version>0.11.1</version>
+		<version>0.16.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>wdtk-testing</artifactId>
@@ -18,12 +18,12 @@
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>wdtk-util</artifactId>
-			<version>${project.version}</version>
+                        <version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>  
-			<version>1.9.5</version> 
+                        <scope>compile</scope>
 		</dependency>
 	</dependencies>
 </project>

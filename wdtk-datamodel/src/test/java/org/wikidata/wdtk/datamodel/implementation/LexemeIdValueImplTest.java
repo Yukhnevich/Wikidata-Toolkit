@@ -1,5 +1,3 @@
-package org.wikidata.wdtk.datamodel.implementation;
-
 /*
  * #%L
  * Wikidata Toolkit Data Model
@@ -20,17 +18,21 @@ package org.wikidata.wdtk.datamodel.implementation;
  * #L%
  */
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+package org.wikidata.wdtk.datamodel.implementation;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+
+import java.io.IOException;
+
 import org.junit.Test;
 import org.wikidata.wdtk.datamodel.helpers.Datamodel;
 import org.wikidata.wdtk.datamodel.helpers.DatamodelMapper;
 import org.wikidata.wdtk.datamodel.interfaces.EntityIdValue;
 
-import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class LexemeIdValueImplTest {
 
@@ -117,6 +119,11 @@ public class LexemeIdValueImplTest {
 	@Test
 	public void testToJavaWithoutNumericalID() throws IOException {
 		assertEquals(lexeme1, mapper.readValue(JSON_LEXEME_ID_VALUE_WITHOUT_NUMERICAL_ID, ValueImpl.class));
+	}
+
+	@Test
+	public void testIsPlaceholder() {
+		assertFalse(lexeme1.isPlaceholder());
 	}
 
 }

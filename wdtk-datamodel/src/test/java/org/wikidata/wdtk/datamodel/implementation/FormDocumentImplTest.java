@@ -1,5 +1,31 @@
 package org.wikidata.wdtk.datamodel.implementation;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
+import org.junit.Test;
+import org.wikidata.wdtk.datamodel.helpers.Datamodel;
+import org.wikidata.wdtk.datamodel.helpers.DatamodelMapper;
+import org.wikidata.wdtk.datamodel.interfaces.Claim;
+import org.wikidata.wdtk.datamodel.interfaces.DatatypeIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.FormDocument;
+import org.wikidata.wdtk.datamodel.interfaces.FormIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.ItemIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.MonolingualTextValue;
+import org.wikidata.wdtk.datamodel.interfaces.PropertyDocument;
+import org.wikidata.wdtk.datamodel.interfaces.Statement;
+import org.wikidata.wdtk.datamodel.interfaces.StatementGroup;
+import org.wikidata.wdtk.datamodel.interfaces.StatementRank;
+
 /*
  * #%L
  * Wikidata Toolkit Data Model
@@ -22,14 +48,6 @@ package org.wikidata.wdtk.datamodel.implementation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Test;
-import org.wikidata.wdtk.datamodel.helpers.DatamodelMapper;
-import org.wikidata.wdtk.datamodel.interfaces.*;
-
-import java.io.IOException;
-import java.util.*;
-
-import static org.junit.Assert.*;
 
 public class FormDocumentImplTest {
 
@@ -99,14 +117,14 @@ public class FormDocumentImplTest {
 		new FormDocumentImpl(null, repList, gramFeatures, statementGroups, 1234);
 	}
 
-	@Test(expected = NullPointerException.class)
-	public void representationsNotNull() {
-		new FormDocumentImpl(fid,  null, gramFeatures, statementGroups, 1234);
+	@Test
+	public void representationsNull() {
+		assertEquals(Collections.emptyMap(), new FormDocumentImpl(fid,  null, gramFeatures, statementGroups, 1234).getRepresentations());
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void representationsNotEmpty() {
-		new FormDocumentImpl(fid, Collections.emptyList(), gramFeatures, statementGroups, 1234);
+	@Test
+	public void representationsEmpty() {
+		assertEquals(Collections.emptyMap(), new FormDocumentImpl(fid, Collections.emptyList(), gramFeatures, statementGroups, 1234).getRepresentations());
 	}
 
 	@Test
@@ -143,6 +161,13 @@ public class FormDocumentImplTest {
 		assertTrue(statements.hasNext());
 		assertEquals(s, statements.next());
 		assertFalse(statements.hasNext());
+	}
+
+	@Test
+	public void testWithEntityId() {
+		assertEquals(FormIdValue.NULL, fd1.withEntityId(FormIdValue.NULL).getEntityId());
+		FormIdValue id = Datamodel.makeWikidataFormIdValue("L123-F45");
+		assertEquals(id, fd1.withEntityId(id).getEntityId());
 	}
 
 	@Test

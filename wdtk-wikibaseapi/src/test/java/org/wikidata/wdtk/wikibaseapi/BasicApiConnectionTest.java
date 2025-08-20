@@ -24,20 +24,35 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.net.URL;
-import java.util.*;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Before;
+import org.junit.Test;
 
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import org.junit.*;
 import org.wikidata.wdtk.testing.MockStringContentFactory;
 import org.wikidata.wdtk.wikibaseapi.apierrors.AssertUserFailedException;
 import org.wikidata.wdtk.wikibaseapi.apierrors.MaxlagErrorException;
 import org.wikidata.wdtk.wikibaseapi.apierrors.MediaWikiApiErrorException;
+import org.wikidata.wdtk.wikibaseapi.apierrors.MediaWikiErrorMessage;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -84,13 +99,25 @@ public class BasicApiConnectionTest {
 							.setBody("{\"entities\":{\"Q8\":{\"pageid\":134,\"ns\":0,\"title\":\"Q8\",\"lastrevid\":1174289176,\"modified\":\"2020-05-05T12:39:07Z\",\"type\":\"item\",\"id\":\"Q8\"}},\"success\":1}\n");
 				}
 				try {
-					switch (request.getBody().readUtf8()) {
+					String requestBody = request.getBody().readUtf8();
+					// in the case of file uploads, the string representation of the request body is not stable
+					// so we only check that some file was uploaded (for testPostFile)
+					if (requestBody.contains("Content-Disposition: form-data; name=\"file\"; filename=\"hello.txt\"") &&
+							requestBody.contains("multipart/form-data")) {
+						return new MockResponse()
+								.setHeader("Content-Type", "application/json; charset=utf-8")
+								.setBody("{\"success\":\"true\"}");
+					}
+					// otherwise, check for equality on the request body
+					switch (requestBody) {
 						case "meta=tokens&format=json&action=query&type=login":
 							return makeJsonResponseFrom("/query-login-token.json");
 						case "lgtoken=b5780b6e2f27e20b450921d9461010b4&lgpassword=password&format=json&action=login&lgname=username":
 							return makeJsonResponseFrom("/loginSuccess.json");
 						case "lgtoken=b5780b6e2f27e20b450921d9461010b4&lgpassword=password1&format=json&action=login&lgname=username1":
-							return makeJsonResponseFrom("/loginError.json");
+							return makeJsonResponseFrom("/loginError.json"); 
+						case "lgtoken=b5780b6e2f27e20b450921d9461010b4&lgpassword=password2&format=json&action=login&lgname=username":
+							return makeJsonResponseFrom("/loginFailed.json");
 						case "meta=tokens&assert=user&format=json&action=query&type=csrf":
 							return makeJsonResponseFrom("/query-csrf-token-loggedin-response.json");
 						case "assert=user&format=json&action=logout&token=42307b93c79b0cb558d2dfb4c3c92e0955e06041%2B%5C":
@@ -98,7 +125,18 @@ public class BasicApiConnectionTest {
 						case "assert=user&format=json&action=query":
 							return makeJsonResponseFrom("/assert-user-failed.json");
 					}
-				}catch (Exception e) {
+					// finally check clientLogin. This uses server.url, so cannot be used in switch statement because it is not constant.
+					String url = server.url("/w/api.php").toString();
+					String encodedUrl = URLEncoder.encode(url, "UTF-8");
+					final String clientLoginRequest = String.format("password=password&format=json&action=clientlogin&logintoken=b5780b6e2f27e20b450921d9461010b4&loginreturnurl=%s&username=Admin" , encodedUrl);
+					final String clientLoginErrorRequest = String.format("password=password1&format=json&action=clientlogin&logintoken=b5780b6e2f27e20b450921d9461010b4&loginreturnurl=%s&username=Admin" , encodedUrl);
+					if (requestBody.equals(clientLoginRequest)) {
+						return makeJsonResponseFrom("/clientLoginSuccess.json");
+					} else if (requestBody.equals(clientLoginErrorRequest)) {
+						return makeJsonResponseFrom("/clientLoginError.json");
+					}
+
+				} catch (Exception e) {
 					return new MockResponse().setResponseCode(404);
 				}
 				return new MockResponse().setResponseCode(404);
@@ -138,10 +176,25 @@ public class BasicApiConnectionTest {
 	}
 
 	@Test
+	public void testConfirmClientLogin() throws LoginFailedException, IOException, MediaWikiApiErrorException {
+		String token = connection.getOrFetchToken("login");
+		connection.confirmClientLogin(token, "Admin", "password");
+	}
+
+	@Test
 	public void testLogin() throws LoginFailedException {
 		assertFalse(connection.loggedIn);
 		connection.login("username", "password");
 		assertEquals("username", connection.getCurrentUser());
+		assertEquals("password", connection.password);
+		assertTrue(connection.isLoggedIn());
+	}
+
+	@Test
+	public void testClientLogin() throws LoginFailedException {
+		assertFalse(connection.loggedIn);
+		connection.clientLogin("Admin", "password");
+		assertEquals("Admin", connection.getCurrentUser());
 		assertEquals("password", connection.password);
 		assertTrue(connection.isLoggedIn());
 	}
@@ -191,10 +244,20 @@ public class BasicApiConnectionTest {
 		assertFalse(connection.loggedIn);
 	}
 
-	@Test(expected = LoginFailedException.class)
-	public void loginUserErrors() throws LoginFailedException {
+	@Test
+	public void loginUserError() {
 		// This will fail because the user is not known
-		connection.login("username1", "password1");
+		LoginFailedException loginFailedException = assertThrows(LoginFailedException.class, 
+				() -> connection.login("username1", "password1"));	
+		assertEquals("NotExists: Username does not exist.", loginFailedException.getMessage());
+	}
+
+	@Test
+	public void loginFailedUsesReason() {
+		// This will fail because the user is not known
+		LoginFailedException loginFailedException = assertThrows(LoginFailedException.class,
+				() -> connection.login("username", "password2"));
+		assertEquals("Incorrect username or password entered. Please try again.", loginFailedException.getMessage());
 	}
 
 	@Test
@@ -209,6 +272,27 @@ public class BasicApiConnectionTest {
 				split("lgtoken=b5780b6e2f27e20b450921d9461010b4&lgpassword=password"
 						+ "&action=login&lgname=username&format=json", '&'),
 				split(connection.getQueryString(params), '&'));
+	}
+	
+	@Test
+	public void testPostFile() throws IOException, MediaWikiApiErrorException {
+		Map<String, String> formParams = new HashMap<>();
+		formParams.put("foo", "bar");
+
+		File file = File.createTempFile("upload_test", ".txt");
+		try {
+			FileWriter writer = new FileWriter(file);
+			writer.write("contents");
+			writer.close();
+			Map<String, ImmutablePair<String, File>> fileParams = new HashMap<>();
+			fileParams.put("file", new ImmutablePair<String,File>("hello.txt", file));
+			
+			JsonNode node = connection.sendJsonRequest("POST", formParams, fileParams);
+			assertEquals(node.get("success").asText(), "true");
+		} finally {
+			file.delete();
+		}
+		
 	}
 
 	@Test
@@ -245,6 +329,22 @@ public class BasicApiConnectionTest {
 			assertEquals(3.45, e.getLag(), 0.001);
 		}
 	}
+	   
+    @Test
+    public void testAbuseFilterError() throws IOException, MediaWikiApiErrorException {
+        JsonNode root;
+        URL path = this.getClass().getResource("/error-spam-filter.json");
+        root = mapper.readTree(path.openStream());
+        try {
+            connection.checkErrors(root);
+        } catch(MediaWikiApiErrorException e) {
+            List<MediaWikiErrorMessage> expectedMessages = Arrays.asList(
+                    new MediaWikiErrorMessage("wikibase-api-failed-save", "The save has failed."),
+                    new MediaWikiErrorMessage("spam-blacklisted-link", "The text you wanted to publish was blocked by the spam filter.")
+            );
+            assertEquals(expectedMessages, e.getDetailedMessages());
+        }
+    }
 
 	@Test
 	public void testClearCookies() throws LoginFailedException, IOException, MediaWikiApiErrorException {
@@ -266,33 +366,6 @@ public class BasicApiConnectionTest {
 		ApiConnection connection = BasicApiConnection.getTestWikidataApiConnection();
 		assertEquals("https://test.wikidata.org/w/api.php",
 				connection.apiBaseUrl);
-	}
-
-	@Test
-	public void testErrorMessages() {
-		BasicApiConnection connection = BasicApiConnection.getTestWikidataApiConnection();
-		String[] knownErrors = { BasicApiConnection.LOGIN_WRONG_PASS,
-				BasicApiConnection.LOGIN_WRONG_PLUGIN_PASS,
-				BasicApiConnection.LOGIN_NOT_EXISTS, BasicApiConnection.LOGIN_BLOCKED,
-				BasicApiConnection.LOGIN_EMPTY_PASS, BasicApiConnection.LOGIN_NO_NAME,
-				BasicApiConnection.LOGIN_CREATE_BLOCKED,
-				BasicApiConnection.LOGIN_ILLEGAL, BasicApiConnection.LOGIN_THROTTLED,
-				BasicApiConnection.LOGIN_WRONG_TOKEN, BasicApiConnection.LOGIN_NEEDTOKEN };
-
-		ArrayList<String> messages = new ArrayList<>();
-		for (String error : knownErrors) {
-			messages.add(connection.getLoginErrorMessage(error));
-		}
-
-		String unknownMessage = connection
-				.getLoginErrorMessage("unkonwn error code");
-
-		int i = 0;
-		for (String message : messages) {
-			assertNotEquals(unknownMessage, message);
-			assertTrue(message.contains(knownErrors[i]));
-			i++;
-		}
 	}
 
 	@Test(expected = AssertUserFailedException.class)
