@@ -23,6 +23,8 @@ package org.wikidata.wdtk.datamodel.implementation;
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.Validate;
 import org.wikidata.wdtk.datamodel.helpers.Equality;
@@ -102,6 +104,7 @@ public class EntityRedirectDocumentImpl implements EntityRedirectDocument  {
 	}
 
 	@Override
+	@JsonInclude(Include.NON_NULL)
 	public String getModified() {
 		return modified;
 	}

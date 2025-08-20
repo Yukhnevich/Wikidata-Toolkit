@@ -151,7 +151,12 @@ public class JsonSerializerTest {
 				return 0;
 			}
 
-			@Override
+            @Override
+            public String getModified() {
+                return null;
+            }
+
+            @Override
 			public Map<String, MonolingualTextValue> getLabels() {
 				return null;
 			}

@@ -175,6 +175,8 @@ public abstract class EntityDocumentImpl implements EntityDocument {
 	}
 
 	@Override
+	@JsonInclude(Include.NON_NULL)
+	@JsonProperty("modified")
 	public String getModified() {
 		return modified;
 	}
